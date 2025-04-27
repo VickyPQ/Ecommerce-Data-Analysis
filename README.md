@@ -1,23 +1,19 @@
 # E‑Commerce SQL Analytics Portfolio
-
 > **Dataset:** *Maven Fuzzy Factory* (MySQL)\
 > **Role Demonstrated:** Data & Insights Analyst\
 > **Author:** Vicky Peng\
-> **Repo structure:**
->
+
 
 ## Introduction
 
 Maven Fuzzy Factory is an 8‑month‑old DTC e‑commerce start‑up that sells irresistibly cute *plush creatures*.\
 <br>
-The founding team is lean — a CEO, a Marketing Director, and a Website Manager — so the analyst (that's ME) sits **at the intersection of data and strategy**, turning raw click‑stream data into commercial moves that grow revenue and margin.\
+The founding team is lean — a CEO, a Marketing Director, and a Website Manager — so the analyst (that's ME) sits **at the intersection of data and strategy**, turning raw click‑stream data into commercial moves that grow revenue and margin. As an aspiring analyst I rebuilt six of the questions I was routinely asked by C‑level and marketing leadership into a single, reproducible SQL portfolio. \
 <br>
-As an aspiring analyst I rebuilt six of the questions I was routinely asked by C‑level and marketing leadership into a single, reproducible SQL portfolio. \
-<br>
-This project answers that call, end‑to‑end—**from raw tables to board‑ready insights**—showcasing advanced SQL techniques such as *pivoting with `CASE` & aggregate counts, window functions, multi‑step analyses with temporary tables & sub‑queries.*
-
 ---
 <br>
+
+## Key Skills Highlighted
 
 ## Database Description
 *Schema:* `mavenfuzzyfactory`  (6 tables)  
@@ -301,7 +297,6 @@ GROUP BY website_pageviews.pageview_url;
 |------------------|------------------------|
 | /home            | 10,711                 |
 
----
 
 > **Insight →** The homepage is currently the dominant entry point for nearly all user sessions, which suggests it's the first impression for most visitors and a crucial focus area for optimization.
 
@@ -1026,9 +1021,744 @@ GROUP BY hr;
 
 > **Next move →** Staff customer support with at least two agents from 8am–5pm on weekdays, with one agent available around the clock to handle off-hours activity.
 
+---
+<br>
+
 ### 5️⃣ Product Analysis
 
-| #   | Assignment                            | Business Lens                         |
-|-----|----------------------------------------|----------------------------------------|
-| 5.1 | Identifying Top Products               | Core revenue drivers                   |
-| 5.2 | Conversion Funnel by Product Category  | Purchase intent by category            |
+| #   | Assignment                                | Business Lens                         |
+|-----|-------------------------------------------|---------------------------------------|
+| 5.1 | Product-Level Sales Analysis              | Core revenue drivers                  |
+| 5.2 | Analyzing Product Launches                | Launch impact assessment              |
+| 5.3 | Product-Level Website Pathing             | Customer journey insights             |
+| 5.4 | Building Product-Level Conversion Funnels | Funnel optimization by product        |
+| 5.5 | Cross-Sell Analysis                       | Product affinity and upsell strategy  |
+| 5.6 | Product Portfolio Expansion               | Strategic portfolio development       |
+| 5.7 | Analyzing Product Refund Rates            | Quality control and customer behavior |
+
+
+
+#### 5.1 Product-Level Sales Analysis
+
+```sql
+-- Pull monthly trends: number of sales, total revenue, and total margin
+SELECT
+  YEAR(created_at) AS yr,
+  MONTH(created_at) AS mo,
+  COUNT(DISTINCT order_id) AS number_of_sales,
+  SUM(price_usd) AS total_revenue,
+  SUM(price_usd - cogs_usd) AS total_margin
+FROM orders
+WHERE created_at < '2013-01-04' -- pulling data up to the request date
+GROUP BY
+  YEAR(created_at),
+  MONTH(created_at);
+```
+
+**Output**
+
+| yr   | mo  | number_of_sales | total_revenue | total_margin |
+|-----|-----|-----------------|---------------|--------------|
+| 2012 | 3   | 60              | 2999.40       | 1830.00      |
+| 2012 | 4   | 99              | 4949.01       | 3019.50      |
+| 2012 | 5   | 108             | 5398.92       | 3294.00      |
+| 2012 | 6   | 140             | 6998.60       | 4270.00      |
+| 2012 | 7   | 169             | 8448.31       | 5154.50      |
+| 2012 | 8   | 228             | 11397.72      | 6954.00      |
+| 2012 | 9   | 287             | 14347.13      | 8753.50      |
+| 2012 | 10  | 371             | 18546.29      | 11315.50     |
+| 2012 | 11  | 618             | 30893.82      | 18849.00     |
+| 2012 | 12  | 506             | 25294.94      | 15433.00     |
+| 2013 | 1   | 42              | 2099.58       | 1281.00      |
+
+
+> **Insight →**  
+The business experienced strong, consistent growth in 2012, both in sales volume and margins. November (2012-11) saw a significant revenue and margin peak, likely due to Black Friday/Cyber Monday sales periods. This trend offers a robust baseline to assess the upcoming product launch’s success.
+
+> **Next move →**  
+Use this dataset as the baseline to benchmark the new product’s launch performance. Monitor sales, revenue, and margin evolution monthly post-launch, and prepare to adjust strategies based on early trend indicators.
+
+
+
+---
+
+#### 5.2. Conversion Funnel by Product Category
+
+```sql
+SELECT
+  YEAR(website_sessions.created_at) AS yr,
+  MONTH(website_sessions.created_at) AS mo,
+  COUNT(DISTINCT orders.order_id) AS orders,
+  COUNT(DISTINCT orders.order_id) / COUNT(DISTINCT website_sessions.website_session_id) AS conv_rate,
+  SUM(orders.price_usd) / COUNT(DISTINCT website_sessions.website_session_id) AS revenue_per_session,
+  COUNT(DISTINCT CASE WHEN primary_product_id = 1 THEN order_id ELSE NULL END) AS product_one_orders,
+  COUNT(DISTINCT CASE WHEN primary_product_id = 2 THEN order_id ELSE NULL END) AS product_two_orders
+FROM website_sessions
+LEFT JOIN orders
+  ON website_sessions.website_session_id = orders.website_session_id
+WHERE website_sessions.created_at < '2013-04-05' -- the date of the request
+  AND website_sessions.created_at > '2012-04-01' -- specified in the request
+GROUP BY 1, 2;
+```
+
+**Output**
+
+| yr   | mo | orders | conv_rate | revenue_per_session | product_one_orders | product_two_orders |
+|-----|----|--------|-----------|---------------------|--------------------|--------------------|
+| 2012 | 4 | 99     | 0.0265    | 1.325391            | 99                 | 0                  |
+| 2012 | 5 | 108    | 0.0289    | 1.445107            | 108                | 0                  |
+| 2012 | 6 | 140    | 0.0353    | 1.765985            | 140                | 0                  |
+| 2012 | 7 | 169    | 0.0398    | 1.988305            | 169                | 0                  |
+| 2012 | 8 | 228    | 0.0374    | 1.869398            | 228                | 0                  |
+| 2012 | 9 | 287    | 0.0438    | 2.191740            | 287                | 0                  |
+| 2012 | 10| 371    | 0.0453    | 2.266441            | 371                | 0                  |
+| 2012 | 11| 618    | 0.0441    | 2.204969            | 618                | 0                  |
+| 2012 | 12| 506    | 0.0502    | 2.511412            | 506                | 0                  |
+| 2013 | 1 | 391    | 0.0611    | 3.127025            | 344                | 47                 |
+| 2013 | 2 | 497    | 0.0693    | 3.692108            | 335                | 162                |
+| 2013 | 3 | 385    | 0.0615    | 3.176269            | 320                | 65                 |
+| 2013 | 4 | 96     | 0.0794    | 4.085227            | 82                 | 14                 |
+
+
+> **Insight →**  
+> Following the launch of the second product in January 2013, there is a noticeable improvement in conversion rates and revenue per session. Product 2 contributed meaningfully to order volume, with February showing a particularly strong uptake.
+
+
+
+> **Next move →**  
+> - Monitor how product mix evolves in future months to ensure both products continue to contribute positively.  
+> - Plan a deeper analysis to isolate the incremental impact of Product 2 from overall business improvements.  
+> - Stay ready for additional launch-specific analysis requests from Cindy and Tom.
+
+
+---
+
+### 5.3. Product Level Website Pathing
+
+```sql
+-- Step 1: Finding the /products pageviews we care about
+CREATE TEMPORARY TABLE products_pageviews
+SELECT
+    website_session_id,
+    website_pageview_id,
+    created_at,
+    CASE
+        WHEN created_at < '2013-01-06' THEN 'A. Pre_Product_2'
+        WHEN created_at >= '2013-01-06' THEN 'B. Post_Product_2'
+        ELSE 'uh oh...check logic'
+    END AS time_period
+FROM website_pageviews
+WHERE created_at < '2013-04-06' -- date of request
+  AND created_at > '2012-10-06' -- 3 months before product 2 launch
+  AND pageview_url = '/products';
+
+-- Step 2: Finding the next pageview ID that occurs AFTER the product pageview
+CREATE TEMPORARY TABLE sessions_w_next_pageview_id
+SELECT
+    products_pageviews.time_period,
+    products_pageviews.website_session_id,
+    MIN(website_pageviews.website_pageview_id) AS min_next_pageview_id
+FROM products_pageviews
+LEFT JOIN website_pageviews
+  ON website_pageviews.website_session_id = products_pageviews.website_session_id
+  AND website_pageviews.website_pageview_id > products_pageviews.website_pageview_id
+GROUP BY 1,2;
+
+-- Step 3: Find the pageview URL associated with any applicable next pageview ID
+CREATE TEMPORARY TABLE sessions_w_next_pageview_url
+SELECT
+    sessions_w_next_pageview_id.time_period,
+    sessions_w_next_pageview_id.website_session_id,
+    website_pageviews.pageview_url AS next_pageview_url
+FROM sessions_w_next_pageview_id
+LEFT JOIN website_pageviews
+  ON website_pageviews.website_pageview_id = sessions_w_next_pageview_id.min_next_pageview_id;
+
+-- Step 4: Summarize the data and analyze the pre vs post periods
+SELECT
+    time_period,
+    COUNT(DISTINCT website_session_id) AS sessions,
+    COUNT(DISTINCT CASE WHEN next_pageview_url IS NOT NULL THEN website_session_id ELSE NULL END) AS w_next_pg,
+    COUNT(DISTINCT CASE WHEN next_pageview_url IS NOT NULL THEN website_session_id ELSE NULL END) / COUNT(DISTINCT website_session_id) AS pct_w_next_pg,
+    COUNT(DISTINCT CASE WHEN next_pageview_url = '/the-original-mr-fuzzy' THEN website_session_id ELSE NULL END) AS to_mrfuzzy,
+    COUNT(DISTINCT CASE WHEN next_pageview_url = '/the-original-mr-fuzzy' THEN website_session_id ELSE NULL END) / COUNT(DISTINCT website_session_id) AS pct_to_mrfuzzy,
+    COUNT(DISTINCT CASE WHEN next_pageview_url = '/the-forever-love-bear' THEN website_session_id ELSE NULL END) AS to_lovebear,
+    COUNT(DISTINCT CASE WHEN next_pageview_url = '/the-forever-love-bear' THEN website_session_id ELSE NULL END) / COUNT(DISTINCT website_session_id) AS pct_to_lovebear
+FROM sessions_w_next_pageview_url
+GROUP BY time_period;
+```
+
+
+**Output**
+
+| time_period       | sessions | w_next_pg | pct_w_next_pg | to_mrfuzzy | pct_to_mrfuzzy | to_lovebear | pct_to_lovebear |
+|-------------------|----------|-----------|---------------|------------|---------------|-------------|-----------------|
+| A. Pre_Product_2  | 15,696   | 11,347    | 0.7229        | 11,347     | 0.7229        | 0           | 0.0000          |
+| B. Post_Product_2 | 10,709   | 8,200     | 0.7657        | 6,654      | 0.6213        | 1,546       | 0.1444          |
+
+
+> **Insight →**  
+> After the new product ("Love Bear") launched, the overall clickthrough rate from the `/products` page increased (from 72.29% to 76.57%).  
+> However, clickthroughs to "Mr. Fuzzy" dropped slightly, while "Love Bear" captured a new 14.44% of traffic, indicating that the new product generated additional product interest and slightly redistributed attention across offerings.
+
+
+> **Next move →**  
+> - Follow up with a detailed conversion funnel for each product to better understand where customers may be dropping off.  
+> - Proactively monitor if "Love Bear" customers also engage with other products, suggesting cross-sell opportunities.
+
+---
+
+
+
+#### 5.4 Building Product-Level Conversion Funnels
+
+```sql
+-- STEP 1: Identify sessions seeing product pages
+CREATE TEMPORARY TABLE sessions_seeing_product_pages AS
+SELECT
+  website_session_id,
+  website_pageview_id,
+  pageview_url AS product_page_seen
+FROM website_pageviews
+WHERE created_at BETWEEN '2013-01-06' AND '2013-04-10'
+  AND pageview_url IN ('/the-original-mr-fuzzy', '/the-forever-love-bear');
+
+-- STEP 2: Find next pageviews after product pages
+SELECT DISTINCT
+  website_pageviews.pageview_url
+FROM sessions_seeing_product_pages
+LEFT JOIN website_pageviews
+  ON website_pageviews.website_session_id = sessions_seeing_product_pages.website_session_id
+  AND website_pageviews.website_pageview_id > sessions_seeing_product_pages.website_pageview_id;
+
+-- STEP 3: Create a session-level flag for funnel steps
+SELECT
+  sessions_seeing_product_pages.website_session_id,
+  sessions_seeing_product_pages.product_page_seen,
+  CASE WHEN pageview_url = '/cart' THEN 1 ELSE 0 END AS cart_page,
+  CASE WHEN pageview_url = '/shipping' THEN 1 ELSE 0 END AS shipping_page,
+  CASE WHEN pageview_url = '/billing-2' THEN 1 ELSE 0 END AS billing_page,
+  CASE WHEN pageview_url = '/thank-you-for-your-order' THEN 1 ELSE 0 END AS thankyou_page
+FROM sessions_seeing_product_pages
+LEFT JOIN website_pageviews
+  ON website_pageviews.website_session_id = sessions_seeing_product_pages.website_session_id
+  AND website_pageviews.website_pageview_id > sessions_seeing_product_pages.website_pageview_id
+ORDER BY
+  sessions_seeing_product_pages.website_session_id,
+  website_pageviews.created_at;
+
+-- STEP 4: Aggregate session-level results
+CREATE TEMPORARY TABLE session_product_level_made_it_flags AS
+SELECT
+  website_session_id,
+  CASE
+    WHEN product_page_seen = '/the-original-mr-fuzzy' THEN 'mrfuzzy'
+    WHEN product_page_seen = '/the-forever-love-bear' THEN 'lovebear'
+    ELSE 'check logic'
+  END AS product_seen,
+  MAX(cart_page) AS cart_made_it,
+  MAX(shipping_page) AS shipping_made_it,
+  MAX(billing_page) AS billing_made_it,
+  MAX(thankyou_page) AS thankyou_made_it
+FROM (
+  -- previous session flags
+)
+GROUP BY website_session_id, product_seen;
+
+-- STEP 5a: Funnel raw counts
+SELECT
+  product_seen,
+  COUNT(DISTINCT website_session_id) AS sessions,
+  COUNT(DISTINCT CASE WHEN cart_made_it = 1 THEN website_session_id ELSE NULL END) AS to_cart,
+  COUNT(DISTINCT CASE WHEN shipping_made_it = 1 THEN website_session_id ELSE NULL END) AS to_shipping,
+  COUNT(DISTINCT CASE WHEN billing_made_it = 1 THEN website_session_id ELSE NULL END) AS to_billing,
+  COUNT(DISTINCT CASE WHEN thankyou_made_it = 1 THEN website_session_id ELSE NULL END) AS to_thankyou
+FROM session_product_level_made_it_flags
+GROUP BY product_seen;
+
+-- STEP 5b: Funnel conversion rates
+SELECT
+  product_seen,
+  ROUND(COUNT(DISTINCT CASE WHEN cart_made_it = 1 THEN website_session_id ELSE NULL END) / COUNT(DISTINCT website_session_id), 4) AS product_page_click_rt,
+  ROUND(COUNT(DISTINCT CASE WHEN shipping_made_it = 1 THEN website_session_id ELSE NULL END) / COUNT(DISTINCT website_session_id), 4) AS cart_click_rt,
+  ROUND(COUNT(DISTINCT CASE WHEN billing_made_it = 1 THEN website_session_id ELSE NULL END) / COUNT(DISTINCT website_session_id), 4) AS shipping_click_rt,
+  ROUND(COUNT(DISTINCT CASE WHEN thankyou_made_it = 1 THEN website_session_id ELSE NULL END) / COUNT(DISTINCT website_session_id), 4) AS billing_click_rt
+FROM session_product_level_made_it_flags
+GROUP BY product_seen;
+```
+
+
+**Output** 
+Conversion Raw Counts
+
+| product_seen | sessions | to_cart | to_shipping | to_billing | to_thankyou |
+|--------------|----------|---------|-------------|------------|-------------|
+| lovebear     | 1599     | 877     | 603         | 488        | 301         |
+| mrfuzzy      | 6985     | 3038    | 2084        | 1710       | 1088        |
+
+Conversion Rates
+
+| product_seen | product_page_click_rt | cart_click_rt | shipping_click_rt | billing_click_rt |
+|--------------|-----------------------|---------------|-------------------|------------------|
+| lovebear     | 0.5485                 | 0.6876        | 0.8093            | 0.6168           |
+| mrfuzzy      | 0.4349                 | 0.6860        | 0.8205            | 0.6363           |
+
+
+
+> **Insight →**  
+"Lovebear" has a higher product page clickthrough rate (0.5485) compared to "Mr. Fuzzy" (0.4349), suggesting stronger initial attraction.  
+Further into the funnel (cart, shipping, billing), both products perform similarly, but Lovebear slightly outperforms in early-stage engagement.
+
+
+
+> **Next move →**  
+Invest more marketing efforts around Lovebear, perhaps testing different promotions or bundles.  
+Monitor if the higher clickthrough translates into sustained higher final purchases as product familiarity increases.
+
+---
+
+
+#### 5.5. Cross-Selling Analysis
+
+```sql
+-- Step 1: Identify /cart page views and sessions
+CREATE TEMPORARY TABLE sessions_seeing_cart AS
+SELECT
+  CASE
+    WHEN created_at < '2013-09-25' THEN 'A. Pre_Cross_Sell'
+    WHEN created_at >= '2013-09-25' THEN 'B. Post_Cross_Sell'
+    ELSE 'uh oh...check logic'
+  END AS time_period,
+  website_session_id AS cart_session_id,
+  website_pageview_id AS cart_pageview_id
+FROM website_pageviews
+WHERE created_at BETWEEN '2013-08-25' AND '2013-10-25'
+  AND pageview_url = '/cart';
+
+-- Step 2: Identify sessions that continued after the cart page
+CREATE TEMPORARY TABLE cart_sessions_seeing_another_page AS
+SELECT
+  sessions_seeing_cart.time_period,
+  sessions_seeing_cart.cart_session_id,
+  MIN(website_pageviews.website_pageview_id) AS pv_id_after_cart
+FROM sessions_seeing_cart
+LEFT JOIN website_pageviews
+  ON website_pageviews.website_session_id = sessions_seeing_cart.cart_session_id
+  AND website_pageviews.website_pageview_id > sessions_seeing_cart.cart_pageview_id
+GROUP BY 1,2
+HAVING MIN(website_pageviews.website_pageview_id) IS NOT NULL;
+
+-- Step 3: Match cart sessions to orders
+CREATE TEMPORARY TABLE pre_post_sessions_orders AS
+SELECT
+  time_period,
+  cart_session_id,
+  order_id,
+  items_purchased,
+  price_usd
+FROM sessions_seeing_cart
+INNER JOIN orders
+  ON sessions_seeing_cart.cart_session_id = orders.website_session_id;
+
+-- Step 4: Aggregate and summarize findings
+SELECT
+  time_period,
+  COUNT(DISTINCT cart_session_id) AS cart_sessions,
+  SUM(clicked_to_another_page) AS clickthroughs,
+  SUM(clicked_to_another_page) / COUNT(DISTINCT cart_session_id) AS cart_ctr,
+  SUM(items_purchased) / SUM(placed_order) AS products_per_order,
+  SUM(price_usd) / SUM(placed_order) AS aov,
+  SUM(price_usd) / COUNT(DISTINCT cart_session_id) AS rev_per_cart_session
+FROM (
+  SELECT
+    sessions_seeing_cart.time_period,
+    sessions_seeing_cart.cart_session_id,
+    CASE WHEN cart_sessions_seeing_another_page.cart_session_id IS NULL THEN 0 ELSE 1 END AS clicked_to_another_page,
+    CASE WHEN pre_post_sessions_orders.order_id IS NULL THEN 0 ELSE 1 END AS placed_order,
+    pre_post_sessions_orders.items_purchased,
+    pre_post_sessions_orders.price_usd
+  FROM sessions_seeing_cart
+  LEFT JOIN cart_sessions_seeing_another_page
+    ON sessions_seeing_cart.cart_session_id = cart_sessions_seeing_another_page.cart_session_id
+  LEFT JOIN pre_post_sessions_orders
+    ON sessions_seeing_cart.cart_session_id = pre_post_sessions_orders.cart_session_id
+) AS full_data
+GROUP BY time_period;
+```
+
+
+**Output**
+
+| time_period        | cart_sessions | clickthroughs | cart_ctr | products_per_order | aov        | rev_per_cart_session |
+|--------------------|----------------|---------------|----------|--------------------|------------|----------------------|
+| A. Pre_Cross_Sell  | 1830           | 1229          | 0.6716   | 1.0000              | 51.416380  | 18.318842            |
+| B. Post_Cross_Sell | 1975           | 1351          | 0.6841   | 1.0447              | 54.251848  | 18.431894            |
+
+
+> **Insight →**  
+> After introducing the cross-sell option on September 25th, the **cart CTR increased slightly** (from 67.16% to 68.41%), and both **products per order** and **average order value (AOV)** rose modestly. **Revenue per cart session** also edged up, suggesting that cross-sell positively influenced customer purchase behavior, though the overall shift was moderate.
+
+> **Next move →**  
+> - Monitor long-term performance to ensure the cross-sell effect remains stable or improves.  
+> - Explore testing additional cross-sell opportunities or promotions to further lift AOV.  
+> - Evaluate whether different product pairings could increase uptake even more.
+
+---
+
+
+#### 5.6. Portfolio Expansion Analysis: Impact of Birthday Bear Launch
+
+```sql
+SELECT
+  CASE
+    WHEN website_sessions.created_at < '2013-12-12' THEN 'A. Pre_Birthday_Bear'
+    WHEN website_sessions.created_at >= '2013-12-12' THEN 'B. Post_Birthday_Bear'
+    ELSE 'uh oh...check logic'
+  END AS time_period,
+  COUNT(DISTINCT website_sessions.website_session_id) AS sessions,
+  COUNT(DISTINCT orders.order_id) AS orders,
+  COUNT(DISTINCT orders.order_id) / COUNT(DISTINCT website_sessions.website_session_id) AS conv_rate,
+  SUM(orders.price_usd) AS total_revenue,
+  SUM(orders.items_purchased) AS total_products_sold,
+  SUM(orders.price_usd) / COUNT(DISTINCT orders.order_id) AS average_order_value,
+  SUM(orders.items_purchased) / COUNT(DISTINCT orders.order_id) AS products_per_order,
+  SUM(orders.price_usd) / COUNT(DISTINCT website_sessions.website_session_id) AS revenue_per_session
+FROM website_sessions
+LEFT JOIN orders
+  ON orders.website_session_id = website_sessions.website_session_id
+WHERE website_sessions.created_at BETWEEN '2013-11-12' AND '2014-01-12'
+GROUP BY 1;
+```
+
+
+
+**Output**
+
+| time_period         | sessions | orders | conv_rate | total_revenue | total_products_sold | average_order_value | products_per_order | revenue_per_session |
+|---------------------|----------|--------|-----------|---------------|---------------------|---------------------|--------------------|---------------------|
+| A. Pre_Birthday_Bear | 10998    | 804    | 0.0731    | 41608.69      | 841                 | 51.7595             | 1.0460             | 3.7826              |
+| B. Post_Birthday_Bear| 11234    | 900    | 0.0801    | 47532.86      | 962                 | 52.8143             | 1.0689             | 4.2305              |
+
+
+> **Insight →**  
+> After the launch of the Birthday Bear on December 12th, there was a **healthy increase in conversion rate** (7.31% → 8.01%) and a boost in both **revenue per session** and **average order value**. The **products per order** metric also climbed slightly, indicating the new product likely contributed to broader basket sizes.
+
+> **Next move →**  
+> - Track Birthday Bear's individual performance to ensure it maintains strong interest.  
+> - Consider additional product launches targeting other gift-giving occasions (e.g., holidays, anniversaries).  
+> - Monitor how the expanded portfolio affects long-term session value and repeat purchase behavior.
+
+---
+
+
+### 5.7 Product Refund Rate
+
+```sql
+SELECT
+  YEAR(order_items.created_at) AS yr,
+  MONTH(order_items.created_at) AS mo,
+  COUNT(DISTINCT CASE WHEN product_id = 1 THEN order_item_id ELSE NULL END) AS p1_orders,
+  COUNT(DISTINCT CASE WHEN product_id = 1 THEN order_item_refunds.order_item_id ELSE NULL END) / 
+    COUNT(DISTINCT CASE WHEN product_id = 1 THEN order_item_id ELSE NULL END) AS p1_refund_rt,
+  COUNT(DISTINCT CASE WHEN product_id = 2 THEN order_item_id ELSE NULL END) AS p2_orders,
+  COUNT(DISTINCT CASE WHEN product_id = 2 THEN order_item_refunds.order_item_id ELSE NULL END) / 
+    COUNT(DISTINCT CASE WHEN product_id = 2 THEN order_item_id ELSE NULL END) AS p2_refund_rt,
+  COUNT(DISTINCT CASE WHEN product_id = 3 THEN order_item_id ELSE NULL END) AS p3_orders,
+  COUNT(DISTINCT CASE WHEN product_id = 3 THEN order_item_refunds.order_item_id ELSE NULL END) / 
+    COUNT(DISTINCT CASE WHEN product_id = 3 THEN order_item_id ELSE NULL END) AS p3_refund_rt,
+  COUNT(DISTINCT CASE WHEN product_id = 4 THEN order_item_id ELSE NULL END) AS p4_orders,
+  COUNT(DISTINCT CASE WHEN product_id = 4 THEN order_item_refunds.order_item_id ELSE NULL END) / 
+    COUNT(DISTINCT CASE WHEN product_id = 4 THEN order_item_id ELSE NULL END) AS p4_refund_rt
+FROM order_items
+LEFT JOIN order_item_refunds
+  ON order_items.order_item_id = order_item_refunds.order_item_id
+WHERE order_items.created_at < '2014-10-15'
+GROUP BY 1, 2;
+```
+
+**Output**
+
+| yr   | mo | p1_orders | p1_refund_rt | p2_orders | p2_refund_rt | p3_orders | p3_refund_rt | p4_orders | p4_refund_rt |
+|-----|----|-----------|--------------|-----------|--------------|-----------|--------------|-----------|--------------|
+| 2012 | 4 | 60        | 0.0167       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2012 | 5 | 99        | 0.0505       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2012 | 6 | 108       | 0.0370       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2012 | 7 | 140       | 0.0571       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2012 | 8 | 169       | 0.0828       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2012 | 9 | 228       | 0.0746       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2012 | 10| 287       | 0.0906       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2012 | 11| 371       | 0.0728       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2012 | 12| 618       | 0.0744       | NULL      | NULL         | NULL      | NULL         | NULL      | NULL         |
+| 2013 | 1 | 506       | 0.0593       | 47        | 0.0213       | 0         | NULL         | 0         | NULL         |
+| 2013 | 2 | 336       | 0.0496       | 162       | 0.0123       | 0         | NULL         | 0         | NULL         |
+| 2013 | 3 | 340       | 0.0714       | 94        | 0.0462       | 0         | NULL         | 0         | NULL         |
+| 2013 | 4 | 489       | 0.0643       | 82        | 0.0244       | 0         | NULL         | 0         | NULL         |
+| 2013 | 5 | 459       | 0.0614       | 84        | 0.0556       | 0         | NULL         | 0         | NULL         |
+| 2013 | 6 | 403       | 0.0758       | 90        | 0.0102       | 0         | NULL         | 0         | NULL         |
+| 2013 | 7 | 509       | 0.0727       | 95        | 0.0316       | 0         | NULL         | 0         | NULL         |
+| 2013 | 8 | 537       | 0.0549       | 98        | 0.0102       | 0         | NULL         | 0         | NULL         |
+| 2013 | 9 | 603       | 0.0282       | 135       | 0.0148       | 0         | NULL         | 0         | NULL         |
+| 2013 | 10| 724       | 0.0325       | 174       | 0.0230       | 0         | NULL         | 0         | NULL         |
+| 2013 | 11| 728       | 0.0326       | 183       | 0.0219       | 139       | 0.0719       | 0         | NULL         |
+| 2013 | 12| 818       | 0.0235       | 200       | 0.0650       | 200       | 0.0650       | 0         | NULL         |
+| 2014 | 1 | 784       | 0.0394       | 351       | 0.0171       | 211       | 0.0664       | 202       | 0.0099       |
+| 2014 | 2 | 785       | 0.0396       | 193       | 0.0155       | 244       | 0.0697       | 205       | 0.0049       |
+| 2014 | 3 | 917       | 0.0501       | 214       | 0.0187       | 267       | 0.0674       | 259       | 0.0154       |
+| 2014 | 4 | 1030      | 0.0291       | 246       | 0.0163       | 299       | 0.0569       | 298       | 0.0067       |
+| 2014 | 5 | 893       | 0.0571       | 245       | 0.0367       | 288       | 0.0556       | 249       | 0.0241       |
+| 2014 | 6 | 961       | 0.0477       | 244       | 0.0369       | 276       | 0.0399       | 264       | 0.0156       |
+| 2014 | 7 | 958       | 0.1378       | 237       | 0.0169       | 294       | 0.0680       | 303       | 0.0066       |
+| 2014 | 8 | 1065      | 0.1326       | 251       | 0.0319       | 317       | 0.0662       | 327       | 0.0122       |
+| 2014 | 9 | 513       | 0.0273       | 135       | 0.0074       | 165       | 0.0485       | 155       | 0.0323       |
+
+
+> **Insight →**  
+> After supplier changes in September 2013, the refund rate for Mr. Fuzzy (product 1) improved steadily, but a major quality problem surfaced again in August–September 2014, with refund rates spiking to ~13–14%.  
+> Post supplier replacement in mid-September 2014, refund rates quickly dropped back to acceptable levels.
+
+> **Next move →**  
+> Continue monitoring refund rates monthly, especially for any unexpected upticks.  
+
+
+---
+
+<br>
+
+###  6️⃣ User Analysis
+
+| #    | Assignment                                   | Business Lens                         |
+|------|----------------------------------------------|---------------------------------------|
+| 6.1 | Identifying Repeat Visitors                  | User retention and loyalty measurement |
+| 6.2 | Analyzing Time to Repeat                     | Behavioral cycle insights             |
+| 6.3 | Analyzing Repeat Channel Behavior            | Channel efficiency for retention      |
+| 6.4 | Analyzing New vs. Repeat Conversion Rates    | Value segmentation of users           |
+
+
+
+#### 6.1 Identifying Repeat Customers
+
+```sql
+CREATE TEMPORARY TABLE sessions_w_repeats AS
+SELECT
+  new_sessions.user_id,
+  new_sessions.website_session_id AS new_session_id,
+  website_sessions.website_session_id AS repeat_session_id
+FROM (
+  SELECT
+    user_id,
+    website_session_id
+  FROM website_sessions
+  WHERE created_at >= '2014-01-01'
+    AND created_at < '2014-11-01'
+    AND is_repeat_session = 0
+) AS new_sessions
+LEFT JOIN website_sessions
+  ON website_sessions.user_id = new_sessions.user_id
+  AND website_sessions.is_repeat_session = 1
+  AND website_sessions.website_session_id > new_sessions.website_session_id
+  AND website_sessions.created_at >= '2014-01-01'
+  AND website_sessions.created_at < '2014-11-01';
+
+SELECT
+  repeat_sessions,
+  COUNT(DISTINCT user_id) AS users
+FROM (
+  SELECT
+    user_id,
+    COUNT(DISTINCT new_session_id) AS new_sessions,
+    COUNT(DISTINCT repeat_session_id) AS repeat_sessions
+  FROM sessions_w_repeats
+  GROUP BY user_id
+  ORDER BY repeat_sessions DESC
+) AS user_level
+GROUP BY repeat_sessions;
+```
+
+
+**Output**
+
+| repeat_sessions | users  |
+|-----------------|--------|
+| 0               | 126,813|
+| 1               | 14,086 |
+| 2               | 315    |
+| 3               | 4,686  |
+
+
+> **Insight →**  
+> A significant number of users returned for at least one repeat session after their first visit. While most users did not return, a considerable chunk (~15%) did, highlighting an opportunity for deeper customer engagement analysis.
+
+> **Next move →**  
+> - Explore behavior differences between one-time and repeat visitors.    
+> - Strategize ways to encourage first-time users to return.
+
+---
+
+
+#### 6.2 Analyzing Repeat Behavior
+
+```sql
+-- Step 1: Create a temporary table identifying new and repeat sessions with their created_at timestamps
+CREATE TEMPORARY TABLE sessions_w_repeats_for_time_diff
+SELECT
+  new_sessions.user_id,
+  new_sessions.website_session_id AS new_session_id,
+  new_sessions.created_at AS new_session_created_at,
+  website_sessions.website_session_id AS repeat_session_id,
+  website_sessions.created_at AS repeat_session_created_at
+FROM (
+  SELECT
+    user_id,
+    website_session_id,
+    created_at
+  FROM website_sessions
+  WHERE created_at BETWEEN '2014-01-01' AND '2014-11-03'
+    AND is_repeat_session = 0
+) AS new_sessions
+LEFT JOIN website_sessions
+  ON website_sessions.user_id = new_sessions.user_id
+  AND website_sessions.is_repeat_session = 1
+  AND website_sessions.website_session_id > new_sessions.website_session_id
+  AND website_sessions.created_at BETWEEN '2014-01-01' AND '2014-11-03';
+
+-- Step 2: Get the first repeat session for each user
+SELECT
+  user_id,
+  new_session_id,
+  new_session_created_at,
+  MIN(repeat_session_id) AS second_session_id,
+  MIN(repeat_session_created_at) AS second_session_created_at
+FROM sessions_w_repeats_for_time_diff
+WHERE repeat_session_id IS NOT NULL
+GROUP BY 1,2,3;
+
+-- Step 3: Create a temporary table with the time difference between first and second sessions
+CREATE TEMPORARY TABLE users_first_to_second
+SELECT
+  user_id,
+  DATEDIFF(second_session_created_at, new_session_created_at) AS days_first_to_second_session
+FROM (
+  SELECT
+    user_id,
+    new_session_id,
+    new_session_created_at,
+    MIN(repeat_session_id) AS second_session_id,
+    MIN(repeat_session_created_at) AS second_session_created_at
+  FROM sessions_w_repeats_for_time_diff
+  WHERE repeat_session_id IS NOT NULL
+  GROUP BY 1,2,3
+) AS first_second;
+
+-- Step 4: Aggregate to find average, minimum, and maximum days between first and second sessions
+SELECT
+  AVG(days_first_to_second_session) AS avg_days_first_to_second,
+  MIN(days_first_to_second_session) AS min_days_first_to_second,
+  MAX(days_first_to_second_session) AS max_days_first_to_second
+FROM users_first_to_second;
+```
+
+
+**Output**
+
+| avg_days_first_to_second | min_days_first_to_second | max_days_first_to_second |
+|---------------------------|---------------------------|---------------------------|
+| 33.2622                   | 1                         | 69                        |
+
+
+
+> **Insight →**  
+> On average, repeat visitors return **around 33 days** after their initial session. Some users come back the very next day, while others take up to 69 days to return.
+
+> **Next move →**  
+> - Investigate which channels users are using to come back for the second session.  
+> - Understand if certain acquisition channels drive faster repeat behavior.  
+
+---
+
+
+#### 6.3 New vs Repeat Channel Patterns
+
+```sql
+SELECT
+  CASE
+    WHEN utm_source IS NULL AND http_referer IN ('https://www.gsearch.com', 'https://www.bsearch.com') THEN 'organic_search'
+    WHEN utm_campaign = 'nonbrand' THEN 'paid_nonbrand'
+    WHEN utm_campaign = 'brand' THEN 'paid_brand'
+    WHEN utm_source IS NULL AND http_referer IS NULL THEN 'direct_type_in'
+    WHEN utm_source = 'socialbook' THEN 'paid_social'
+  END AS channel_group,
+  COUNT(CASE WHEN is_repeat_session = 0 THEN website_session_id ELSE NULL END) AS new_sessions,
+  COUNT(CASE WHEN is_repeat_session = 1 THEN website_session_id ELSE NULL END) AS repeat_sessions
+FROM website_sessions
+WHERE created_at < '2014-11-05' -- the date of the assignment
+  AND created_at >= '2014-01-01' -- prescribed date range in assignment
+GROUP BY 1
+ORDER BY 3 DESC;
+```
+
+**Output**
+
+| channel_group   | new_sessions | repeat_sessions |
+|-----------------|--------------|-----------------|
+| organic_search  | 7139         | 11507           |
+| paid_brand      | 6432         | 11027           |
+| direct_type_in  | 6591         | 10564           |
+| paid_nonbrand   | 119950       | 0               |
+| paid_social     | 7652         | 0               |
+
+> **Insight →**  
+> Customers returning for repeat sessions mostly come via organic search, direct type-in, and paid brand channels. Paid nonbrand and paid social hardly see repeat users.  
+> Importantly, only about one-third of repeat visits involve paid clicks, and even those are cheaper brand clicks, suggesting low ongoing acquisition costs.
+
+> **Next move →**  
+> - Watch for an order conversion analysis to determine how well these repeat visits actually monetize.  
+> - Start thinking about the different channel strategies: Should we invest more in brand awareness? Should we optimize direct traffic initiatives?
+
+---
+
+
+
+### 6.4. New vs Repeat Performance
+
+```sql
+SELECT
+  is_repeat_session,
+  COUNT(DISTINCT website_sessions.website_session_id) AS sessions,
+  COUNT(DISTINCT orders.order_id) / COUNT(DISTINCT website_sessions.website_session_id) AS conv_rate,
+  SUM(price_usd) / COUNT(DISTINCT website_sessions.website_session_id) AS rev_per_session
+FROM website_sessions
+LEFT JOIN orders
+  ON website_sessions.website_session_id = orders.website_session_id
+WHERE website_sessions.created_at < '2014-11-08' -- the date of the assignment
+  AND website_sessions.created_at >= '2014-01-01' -- prescribed date range in assignment
+GROUP BY 1;
+```
+
+**Output**
+
+| is_repeat_session | sessions | conv_rate | rev_per_session |
+|-------------------|----------|-----------|-----------------|
+| 0                 | 149,787  | 0.0680    | 4.343754        |
+| 1                 | 33,577   | 0.0811    | 5.168828        |
+
+
+> **Insight →**  
+> Repeat sessions perform significantly better than new sessions. They not only have a higher conversion rate(8.1% vs. 6.8%), but also generate more revenue per session($5.17 vs. $4.34).  
+> This suggests that customers who return are more valuable than new visitors.
+
+
+
+> **Next move →**  
+> - Factor the high-value repeat users into your paid acquisition strategy — perhaps spend more to acquire users with high potential for repeat behavior.  
+
+
+
+---
+
+
+
+
+
+
+
+
