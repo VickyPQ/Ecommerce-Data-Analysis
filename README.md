@@ -10,9 +10,6 @@ Maven Fuzzy Factory is an 8‑month‑old DTC e‑commerce start‑up that sel
 The founding team is lean — a CEO, a Marketing Director, and a Website Manager — so the analyst (that's ME) sits at the intersection of data and strategy, turning raw click‑stream data into commercial moves that grow revenue and margin. As an aspiring analyst I rebuilt six of the questions I was routinely asked by C‑level and marketing leadership into a single, reproducible SQL portfolio. \
 <br>
 
----
-
-## Key Skills Highlighted
 
 ## Database Description
 *Schema:* `mavenfuzzyfactory`  (6 tables)  
@@ -26,7 +23,17 @@ The founding team is lean — a CEO, a Marketing Director, and a Website Manager
 | `products` | One Product | `product_id`, `product_name`, `price_usd` |
 |order_item_refunds | One refunded order item | `order_item_refund_id`, `order_item_id`, `order_id`, `refund_amount_usd`, `created_at`|
 
----
+<br>
+
+## Key Skills Highlighted
+1. **Complex Analytical Queries**: Built layered, multi-step queries for real-world business cases, including traffic analysis, conversion funnel drop-off, and cohort behavior tracking.
+2. **Temporary Tables & Subqueries**: Extensively used CTEs (Common Table Expressions) and temporary tables to manage complex interim results, improving query clarity and modularity.
+3. **Session and Funnel Reconstruction**: Engineered user session paths, entry points, multi-step product funnels, and retention curves directly from raw event-level clickstream data.
+4. **A/B Test Analysis in SQL**: Designed and executed landing page, billing page, and cross-sell A/B tests purely in SQL, from experiment framing to uplift quantification.
+5. **Time Series and Seasonality Decomposition**: Built weekly/monthly trend analyses to extract patterns, seasonality effects, and event-driven anomalies.
+6. **Cross-Channel Portfolio Optimization**: Modeled device-level and channel-level performance for budget reallocation using SQL, integrating marketing ROI principles into database queries.
+7. **Dynamic Cohort Creation**: Dynamically grouped users based on landing pages, devices, and marketing attribution using case-based cohorting inside queries.
+
 <br>
 
 ## Project Objectives
@@ -429,7 +436,7 @@ GROUP BY nonbrand_test_sessions_w_landing_page.landing_page;
 
 ```
 
-**Output**
+**Output**\
 The first instance of /lander-1 to set analysis timeframe
 | first_created_at       | first_pageview_id |
 |------------------------|-------------------|
@@ -1287,7 +1294,7 @@ GROUP BY product_seen;
 ```
 
 
-**Output** 
+**Output** \
 Conversion Raw Counts
 
 | product_seen | sessions | to_cart | to_shipping | to_billing | to_thankyou |
