@@ -5,13 +5,12 @@
 
 
 ## Introduction
-
 Maven Fuzzy Factory is an 8‑month‑old DTC e‑commerce start‑up that sells irresistibly cute *plush creatures*.\
 <br>
-The founding team is lean — a CEO, a Marketing Director, and a Website Manager — so the analyst (that's ME) sits **at the intersection of data and strategy**, turning raw click‑stream data into commercial moves that grow revenue and margin. As an aspiring analyst I rebuilt six of the questions I was routinely asked by C‑level and marketing leadership into a single, reproducible SQL portfolio. \
+The founding team is lean — a CEO, a Marketing Director, and a Website Manager — so the analyst (that's ME) sits at the intersection of data and strategy, turning raw click‑stream data into commercial moves that grow revenue and margin. As an aspiring analyst I rebuilt six of the questions I was routinely asked by C‑level and marketing leadership into a single, reproducible SQL portfolio. \
 <br>
+
 ---
-<br>
 
 ## Key Skills Highlighted
 
@@ -53,7 +52,7 @@ The storyline deliberately mirrors how an exec meeting unfolds—top‑down & ac
 <br>
 
 ---
-### 1️⃣ Traffic Resource Analysis
+## 1️⃣ Traffic Resource Analysis
 | #   | Assignment                            | Business Lens                 |
 | --- | ------------------------------------- | ----------------------------- |
 | 1.1 | Finding Top Traffic Sources      | Baseline channel mix          |
@@ -63,7 +62,7 @@ The storyline deliberately mirrors how an exec meeting unfolds—top‑down & ac
 | 1.5 | Trending with Granular Segments   | Intersectional insights       |
 
 
-#### 1.1.Finding Top Traffic Sources
+### 1.1 Finding Top Traffic Sources
 ```sql
 USE mavenfuzzyfactory;
 
@@ -92,7 +91,7 @@ ORDER BY sessions DESC;
 
 > **Next move →** We should deep‑dive gsearch nonbrand.
 ---
-#### 1.2. Gsearch Nonbrand Conversion Rate
+### 1.2 Gsearch Nonbrand Conversion Rate
 ```sql
 SELECT
     COUNT(DISTINCT website_sessions.website_session_id) AS sessions,
@@ -115,7 +114,7 @@ WHERE website_sessions.created_at < '2012-04-14'
 
 > **Next move →** We should monitor the impact of reduced bids and analyze device-level performance trends to inform future bid strategy adjustments.
 ---
-#### 1.3. Gsearch Nonbrand Volume Trends (Traffic‑Source Trending)
+### 1.3 Gsearch Nonbrand Volume Trends (Traffic‑Source Trending)
 
 ```sql
 USE mavenfuzzyfactory;
@@ -151,7 +150,7 @@ GROUP BY YEARWEEK(website_sessions.created_at);
 
 > **Next move →** We should continue tracking weekly volume and explore strategies to make campaigns more efficient, so that we can increase volume again without increasing bids.
 ---
-#### 1.4. Gsearch Device-Level Performance (Bid Optimisation for Paid Traffic)
+### 1.4 Gsearch Device-Level Performance (Bid Optimisation for Paid Traffic)
 
 ```sql
 SELECT
@@ -185,7 +184,7 @@ GROUP BY 1;
 
 ---
 
-#### 1.5. Gsearch Device-Level Weekly Trends (Trending with Granular Segments)
+### 1.5. Gsearch Device-Level Weekly Trends (Trending with Granular Segments)
 
 ```sql
 SELECT
@@ -223,7 +222,7 @@ GROUP BY YEARWEEK(website_sessions.created_at);
 ---
 <br>
 
-### 2️⃣ Website Performance Analysis
+## 2️⃣ Website Performance Analysis
 
 | #   | Assignment                              | Business Lens                        |
 |-----|-----------------------------------------|--------------------------------------|
@@ -235,7 +234,7 @@ GROUP BY YEARWEEK(website_sessions.created_at);
 | 2.6 | Building Conversion Funnels             | Funnel design & drop-off detection   |
 | 2.7 | Analyzing Conversion Funnel Tests       | Funnel-level experimentation impact  |
 
-#### 2.1. Top Website Pages 
+### 2.1 Top Website Pages 
 ```sql
 USE mavenfuzzyfactory;
 
@@ -268,7 +267,7 @@ ORDER BY sessions DESC;
 > **Next move →** Investigate whether these top-viewed pages are also leading entry pages, and assess each page’s performance to identify any areas for UX or conversion improvement.
 
 ---
-#### 2.2. Top Entry Pages 
+### 2.2. Top Entry Pages 
 
 ```sql
 USE mavenfuzzyfactory;
@@ -303,7 +302,7 @@ GROUP BY website_pageviews.pageview_url;
 > **Next move →** Analyze homepage performance in detail to ensure it delivers a strong first experience, and consider whether it’s truly the best entry point for all user journeys.
 
 ---
-#### 2.3. Bounce Rate Analysis
+### 2.3 Bounce Rate Analysis
 
 ```sql
 USE mavenfuzzyfactory;
@@ -366,7 +365,7 @@ LEFT JOIN bounced_sessions
 
 --- 
 
-#### 2.4. Landing Page A/B Test Analysis
+### 2.4. Landing Page A/B Test Analysis
 
 ```sql
 USE mavenfuzzyfactory;
@@ -431,12 +430,12 @@ GROUP BY nonbrand_test_sessions_w_landing_page.landing_page;
 ```
 
 **Output**
-##### The first instance of /lander-1 to set analysis timeframe
+The first instance of /lander-1 to set analysis timeframe
 | first_created_at       | first_pageview_id |
 |------------------------|-------------------|
 | 2012-06-19 00:35:54    | 23504             |
 
-##### Final analysis output
+Final analysis output
 | landing_page | total_sessions | bounced_sessions | bounce_rate |
 |--------------|----------------|------------------|-------------|
 | /home        | 2261           | 1319             | 0.58337     |
@@ -448,7 +447,7 @@ GROUP BY nonbrand_test_sessions_w_landing_page.landing_page;
 > **Next move →** Redirect all nonbrand paid traffic to **/lander-1** and monitor ongoing performance. Consider rolling out similar optimization tests for other key segments.
 
 ---
-#### 2.5. Landing Page Trend Analysis
+### 2.5 Landing Page Trend Analysis
 
 ```sql
 USE mavenfuzzyfactory;
@@ -517,7 +516,7 @@ GROUP BY YEARWEEK(session_created_at);
 > **Next move →** Maintain close monitoring to ensure performance stays strong and look for other optimization opportunities now that this one is validated.
 
 ---
-#### **2.6. Conversion Funnel Analysis**
+### **2.6. Conversion Funnel Analysis**
 
 ```sql
 USE mavenfuzzyfactory;
@@ -607,13 +606,13 @@ FROM session_level_made_it_flags;
 
 **Output**
 
-##### Session counts at each funnel step:
+Session counts at each funnel step:
 
 | sessions | to_products | to_mrfuzzy | to_cart | to_shipping | to_billing | to_thankyou |
 |----------|-------------|------------|---------|-------------|-------------|---------------|
 | 4494     | 2116        | 1567       | 682     | 454         | 360         | 157           |
 
-##### Click-through rates between steps:
+Click-through rates between steps:
 
 | lander_click_rt | products_click_rt | mrfuzzy_click_rt | cart_click_rt | shipping_click_rt | billing_click_rt |
 |------------------|--------------------|-------------------|----------------|---------------------|-------------------|
@@ -627,7 +626,7 @@ FROM session_level_made_it_flags;
 ---
 
 
-#### 2.7. Conversion Funnel Test Results
+### 2.7. Conversion Funnel Test Results
 
 ```sql
 USE mavenfuzzyfactory;
@@ -673,7 +672,7 @@ GROUP BY billing_version_seen;
 
 <br>
 
-### 3️⃣ Channel Portfolio Management
+## 3️⃣ Channel Portfolio Management
 
 | #   | Assignment                                   | Business Lens                     |
 |-----|----------------------------------------------|-----------------------------------|
@@ -683,7 +682,7 @@ GROUP BY billing_version_seen;
 | 3.4 | Analyzing Channel Portfolio Trends           | Strategic shifts over time        |
 | 3.5 | Analyzing Direct, Brand-Driven Traffic       | Brand equity & campaign leakage   |
 
-#### 3.1. Analyzing Channel Portfolio
+### 3.1. Analyzing Channel Portfolio
 
 ```sql
 USE mavenfuzzyfactory;
@@ -726,7 +725,7 @@ GROUP BY YEARWEEK(created_at);
 > **Next move →** Follow up with analyses on channel characteristics and conversion performance to inform future bidding, investment, and optimization strategies.
 
 ---
-#### 3.2. Comparing Channel Characteristics
+### 3.2. Comparing Channel Characteristics
 
 ```sql
 USE mavenfuzzyfactory;
@@ -756,7 +755,7 @@ GROUP BY utm_source;
 > **Next move →** Expect future questions on optimization based on device mix. Start thinking about how performance varies by device, especially as you prepare bid strategies.
 
 ---
-#### 3.3. Cross Channel Bid Optimisation
+### 3.3. Cross Channel Bid Optimisation
 
 ```sql
 USE mavenfuzzyfactory;
@@ -795,7 +794,7 @@ GROUP BY
 
 ---
 
-#### 3.4. Cross Channel Portfolio Trend
+### 3.4. Cross Channel Portfolio Trend
 
 ```sql
 USE mavenfuzzyfactory;
@@ -843,7 +842,7 @@ GROUP BY YEARWEEK(created_at);
 --- 
 
 
-#### 3.5. Analyzing Direct Traffic
+### 3.5. Analyzing Direct Traffic
 
 ```sql
 SELECT
@@ -901,7 +900,7 @@ GROUP BY
 <br>
 
 
-### 4️⃣ Analyzing Business Patterns and Seasonality
+## 4️⃣ Analyzing Business Patterns and Seasonality
 
 | #   | Assignment                         | Business Lens                         |
 |-----|------------------------------------|----------------------------------------|
@@ -909,7 +908,7 @@ GROUP BY
 | 4.2 | Analyzing Business Patterns        | Behavioral insights & customer cycles  |
 
 
-#### 4.1. Analyzing Seasonality
+### 4.1. Analyzing Seasonality
 
 ```sql
 USE mavenfuzzyfactory;
@@ -950,7 +949,7 @@ GROUP BY 1, 2;
 ---
 
 
-#### 4.2.Analyzing Business Patterns
+### 4.2.Analyzing Business Patterns
 
 ```sql
 -- STEP 1: Count sessions by hour, weekday, and date
@@ -1024,7 +1023,7 @@ GROUP BY hr;
 ---
 <br>
 
-### 5️⃣ Product Analysis
+## 5️⃣ Product Analysis
 
 | #   | Assignment                                | Business Lens                         |
 |-----|-------------------------------------------|---------------------------------------|
@@ -1038,7 +1037,7 @@ GROUP BY hr;
 
 
 
-#### 5.1 Product-Level Sales Analysis
+### 5.1 Product-Level Sales Analysis
 
 ```sql
 -- Pull monthly trends: number of sales, total revenue, and total margin
@@ -1082,7 +1081,7 @@ Use this dataset as the baseline to benchmark the new product’s launch perform
 
 ---
 
-#### 5.2. Conversion Funnel by Product Category
+### 5.2. Conversion Funnel by Product Category
 
 ```sql
 SELECT
@@ -1210,7 +1209,7 @@ GROUP BY time_period;
 
 
 
-#### 5.4 Building Product-Level Conversion Funnels
+### 5.4 Building Product-Level Conversion Funnels
 
 ```sql
 -- STEP 1: Identify sessions seeing product pages
@@ -1318,7 +1317,7 @@ Monitor if the higher clickthrough translates into sustained higher final purcha
 ---
 
 
-#### 5.5. Cross-Selling Analysis
+### 5.5. Cross-Selling Analysis
 
 ```sql
 -- Step 1: Identify /cart page views and sessions
@@ -1406,7 +1405,7 @@ GROUP BY time_period;
 ---
 
 
-#### 5.6. Portfolio Expansion Analysis: Impact of Birthday Bear Launch
+### 5.6. Portfolio Expansion Analysis: Impact of Birthday Bear Launch
 
 ```sql
 SELECT
@@ -1524,7 +1523,7 @@ GROUP BY 1, 2;
 
 <br>
 
-###  6️⃣ User Analysis
+## 6️⃣ User Analysis
 
 | #    | Assignment                                   | Business Lens                         |
 |------|----------------------------------------------|---------------------------------------|
@@ -1535,7 +1534,7 @@ GROUP BY 1, 2;
 
 
 
-#### 6.1 Identifying Repeat Customers
+### 6.1 Identifying Repeat Customers
 
 ```sql
 CREATE TEMPORARY TABLE sessions_w_repeats AS
@@ -1595,7 +1594,7 @@ GROUP BY repeat_sessions;
 ---
 
 
-#### 6.2 Analyzing Repeat Behavior
+### 6.2 Analyzing Repeat Behavior
 
 ```sql
 -- Step 1: Create a temporary table identifying new and repeat sessions with their created_at timestamps
@@ -1676,7 +1675,7 @@ FROM users_first_to_second;
 ---
 
 
-#### 6.3 New vs Repeat Channel Patterns
+### 6.3 New vs Repeat Channel Patterns
 
 ```sql
 SELECT
